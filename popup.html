@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        width: 200px;
+        padding: 10px;
+      }
+      button {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+        cursor: pointer;
+      }
+      .weight-container {
+        margin: 15px 0;
+      }
+      .weight-container label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      select {
+        width: 100%;
+        padding: 5px;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Bionic Reading</h3>
+    <button id="toggleButton">Enable</button>
+
+    <div class="weight-container">
+      <label for="weightSelect">Highlight Weight</label>
+      <select id="weightSelect">
+        <option value="lighter">Lighter</option>
+        <option value="light">Light</option>
+        <option value="normal">Normal</option>
+        <option value="semibold">Semibold</option>
+        <option value="bold" selected>Bold</option>
+      </select>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
