@@ -28,7 +28,21 @@ function styleWord(word) {
   return container;
 }
 
-function processText(text) {
+function processText(text, weight) {
+  // Get the opacity from storage, default to 40%
+  chrome.storage.local.get(['lowlightOpacity'], function(result) {
+    const opacity = (result.lowlightOpacity ?? 40) / 100;
+    
+    // Update the CSS for non-highlighted parts
+    const style = document.createElement('style');
+    style.textContent = `
+      .bionic-reader span:not(.highlight) {
+        opacity: ${opacity};
+      }
+    `;
+    document.head.appendChild(style);
+  });
+  
   const container = document.createElement("span");
   container.className = "bionic-reader";
 
@@ -114,7 +128,7 @@ function boldFirstLetters() {
     if (!text || isNumber(text) || text.length < MIN_TEXT_LENGTH) continue;
 
     const fragment = document.createDocumentFragment();
-    const processedText = processText(node.textContent);
+    const processedText = processText(node.textContent, highlightWeight);
     processedText.setAttribute("data-original", node.textContent);
 
     fragment.appendChild(processedText);
@@ -154,8 +168,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === "processPreview") {
       // Process preview text and return HTML
       highlightWeight = parseInt(request.weight);
-      const processed = processText(request.text);
+      const processed = processText(request.text, highlightWeight);
       sendResponse({ processedHTML: processed.outerHTML });
+    } else if (request.action === "updateOpacity") {
+      const opacity = request.lowlightOpacity / 100;
+      const style = document.createElement('style');
+      style.textContent = `
+        .bionic-reader span:not(.highlight) {
+          opacity: ${opacity};
+        }
+      `;
+      document.head.appendChild(style);
     }
   } catch (error) {
     console.error("Error in content script:", error);
