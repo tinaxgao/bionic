@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Bionic Reading",
+  "name": "Boldly - Bionic Reading",
   "version": "1.0",
-  "description": "Makes reading more efficient by highlighting the start of each word",
+  "description": "Makes reading faster by highlighting the start of each word to keep you focused. Helps with ADHD. Toggle with shortcut.",
   "permissions": ["activeTab", "storage", "tabs"],
   "content_scripts": [
     {

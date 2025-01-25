@@ -1,9 +1,13 @@
 let highlightWeight = 700;
 let lowlightWeight = 300;
 let lowlightOpacity = 0.8;
-let ratio = 0.5;
+let ratio = 0.6;
 
-const isNumber = (value) => !isNaN(Number(value));
+const isNumber = (value) => {
+  const trimmed = value.trim();
+  const normalized = trimmed.replace(/,/g, "");
+  return trimmed !== "" && !isNaN(Number(normalized));
+};
 
 function styleWord(word) {
   if (!word.trim()) return word;
@@ -14,11 +18,13 @@ function styleWord(word) {
   const secondPart = word.slice(splitIndex);
 
   const highlight = document.createElement("span");
+  highlight.className = "bionic-highlight";
   highlight.style.cssText = `font-weight: ${highlightWeight};`;
   highlight.textContent = firstPart;
 
   const lowlight = document.createElement("span");
-  lowlight.style.cssText = `font-weight: ${lowlightWeight}; opacity: ${lowlightOpacity};`;
+  lowlight.className = "bionic-lowlight";
+  lowlight.style.cssText = `font-weight: ${lowlightWeight};`;
   lowlight.textContent = secondPart;
 
   const container = document.createElement("span");
@@ -30,19 +36,19 @@ function styleWord(word) {
 
 function processText(text, weight) {
   // Get the opacity from storage, default to 40%
-  chrome.storage.local.get(['lowlightOpacity'], function(result) {
+  chrome.storage.local.get(["lowlightOpacity"], function (result) {
     const opacity = (result.lowlightOpacity ?? 40) / 100;
-    
-    // Update the CSS for non-highlighted parts
-    const style = document.createElement('style');
+
+    // Update the CSS for lowlight parts only
+    const style = document.createElement("style");
     style.textContent = `
-      .bionic-reader span:not(.highlight) {
+      .bionic-lowlight {
         opacity: ${opacity};
       }
     `;
     document.head.appendChild(style);
   });
-  
+
   const container = document.createElement("span");
   container.className = "bionic-reader";
 
@@ -149,8 +155,6 @@ function removeFormatting() {
 
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("Message received in content script:", request);
-
   try {
     if (request.action === "toggle") {
       if (request.enabled) {
@@ -172,9 +176,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ processedHTML: processed.outerHTML });
     } else if (request.action === "updateOpacity") {
       const opacity = request.lowlightOpacity / 100;
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.textContent = `
-        .bionic-reader span:not(.highlight) {
+        .bionic-lowlight {
           opacity: ${opacity};
         }
       `;
@@ -189,7 +193,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Initialize on load if enabled
 chrome.storage.local.get(["enabled", "highlightWeight"], function (result) {
-  console.log("Initial state:", result);
   if (result.enabled) {
     if (result.highlightWeight) {
       highlightWeight = parseInt(result.highlightWeight);
