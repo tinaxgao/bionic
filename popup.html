@@ -1,44 +1,30 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <style>
-      body {
-        width: 200px;
-        padding: 10px;
-      }
-      button {
-        width: 100%;
-        padding: 8px;
-        margin: 5px 0;
-        cursor: pointer;
-      }
-      .weight-container {
-        margin: 15px 0;
-      }
-      .weight-container label {
-        display: block;
-        margin-bottom: 5px;
-      }
-      select {
-        width: 100%;
-        padding: 5px;
-        margin-top: 5px;
-      }
-    </style>
+    <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <h3>Bionic Reading</h3>
     <button id="toggleButton">Enable</button>
 
     <div class="weight-container">
-      <label for="weightSelect">Highlight Weight</label>
-      <select id="weightSelect">
-        <option value="lighter">Lighter</option>
-        <option value="light">Light</option>
-        <option value="normal">Normal</option>
-        <option value="semibold">Semibold</option>
-        <option value="bold" selected>Bold</option>
-      </select>
+      <label for="weightRange">Highlight Weight</label>
+      <input
+        type="range"
+        id="weightRange"
+        min="100"
+        max="900"
+        step="100"
+        value="700"
+      />
+      <div class="weight-stops">
+        <span>100</span>
+        <span>300</span>
+        <span>500</span>
+        <span>700</span>
+        <span>900</span>
+      </div>
+      <div class="weight-preview">Preview Text</div>
     </div>
 
     <script src="popup.js"></script>

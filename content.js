@@ -1,29 +1,26 @@
-let highlightStyle = "font-weight: bold;";
-let lowlightStyle = "font-weight: lighter;";
+let highlightWeight = 700;
+let lowlightWeight = 300;
 let lowlightOpacity = 0.8;
 let ratio = 0.5;
 
 const isNumber = (value) => !isNaN(Number(value));
 
 function styleWord(word) {
-  if (!word.trim()) return word; // Return whitespace as-is
+  if (!word.trim()) return word;
 
-  // Calculate the split point based on ratio
-  const splitIndex = Math.max(1, Math.round(word.length * ratio));
+  // Calculate the split index based on ratio and ensure at least 1 character
+  const splitIndex = Math.max(1, Math.floor(word.length * ratio));
   const firstPart = word.slice(0, splitIndex);
   const secondPart = word.slice(splitIndex);
 
-  // Create highlight span
   const highlight = document.createElement("span");
-  highlight.style.cssText = `${highlightStyle}`;
+  highlight.style.cssText = `font-weight: ${highlightWeight};`;
   highlight.textContent = firstPart;
 
-  // Create lowlight span
   const lowlight = document.createElement("span");
-  lowlight.style.cssText = `${lowlightStyle} opacity: ${lowlightOpacity};`;
+  lowlight.style.cssText = `font-weight: ${lowlightWeight}; opacity: ${lowlightOpacity};`;
   lowlight.textContent = secondPart;
 
-  // Combine the parts
   const container = document.createElement("span");
   container.appendChild(highlight);
   container.appendChild(lowlight);
@@ -31,8 +28,54 @@ function styleWord(word) {
   return container;
 }
 
+function processText(text) {
+  const container = document.createElement("span");
+  container.className = "bionic-reader";
+
+  const parts = text.split(/(\s+)/);
+
+  parts.forEach((part) => {
+    if (part.trim()) {
+      container.appendChild(styleWord(part));
+    } else {
+      container.appendChild(document.createTextNode(part));
+    }
+  });
+
+  return container;
+}
+
 function boldFirstLetters() {
-  console.log("Executing boldFirstLetters()");
+  // Skip elements that are likely UI/navigation
+  const skipParents = [
+    "SCRIPT",
+    "STYLE",
+    "NOSCRIPT",
+    "TEXTAREA",
+    "BUTTON",
+    "INPUT",
+    "SELECT",
+    "OPTION",
+    "LABEL",
+    "TIME",
+    "CODE",
+    "PRE",
+    "KBD",
+    "SAMP",
+    "VAR",
+    "CITE",
+    "ABBR",
+    "ACRONYM",
+    "NAV",
+    "HEADER",
+    "FOOTER",
+    "MENU",
+    "FORM",
+    "FIGCAPTION",
+  ];
+
+  // Only process text nodes that have enough content
+  const MIN_TEXT_LENGTH = 10;
 
   const textElements = document.evaluate(
     ".//text()[normalize-space()]",
@@ -46,62 +89,41 @@ function boldFirstLetters() {
     const node = textElements.snapshotItem(i);
     const parent = node.parentElement;
 
-    if (
-      !parent ||
-      parent.tagName === "SCRIPT" ||
-      parent.tagName === "STYLE" ||
-      parent.tagName === "NOSCRIPT" ||
-      parent.tagName === "TEXTAREA" ||
-      parent.tagName === "BUTTON" ||
-      parent.tagName === "INPUT" ||
-      parent.tagName === "SELECT" ||
-      parent.tagName === "OPTION" ||
-      parent.tagName === "LABEL" ||
-      parent.tagName === "TIME" ||
-      parent.tagName === "CODE" ||
-      parent.tagName === "PRE" ||
-      parent.tagName === "KBD" ||
-      parent.tagName === "SAMP" ||
-      parent.tagName === "VAR" ||
-      parent.tagName === "CITE" ||
-      parent.tagName === "ABBR" ||
-      parent.tagName === "ACRONYM" ||
-      parent.closest(".bionic-reader")
-    ) {
-      continue;
-    }
+    if (!parent) continue;
 
-    let text = node.textContent.trim();
-    if (!text || isNumber(text)) continue;
-
-    // Create container for the modified content
-    const fragment = document.createDocumentFragment();
-    const container = document.createElement("span");
-    container.className = "bionic-reader";
-    container.setAttribute("data-original", node.textContent);
-
-    // Split text into words while preserving whitespace
-    const parts = node.textContent.split(/(\s+)/);
-
-    parts.forEach((part) => {
-      if (part.trim()) {
-        // It's a word
-        container.appendChild(styleWord(part));
-      } else {
-        // It's whitespace
-        container.appendChild(document.createTextNode(part));
+    // Skip if parent or any ancestor is in skip list
+    let shouldSkip = false;
+    let current = parent;
+    while (current && current !== document.body) {
+      if (
+        skipParents.includes(current.tagName) ||
+        current.closest(".bionic-reader") ||
+        current.getAttribute("role") === "navigation" ||
+        current.getAttribute("role") === "menu" ||
+        current.getAttribute("role") === "banner"
+      ) {
+        shouldSkip = true;
+        break;
       }
-    });
+      current = current.parentElement;
+    }
+    if (shouldSkip) continue;
 
-    fragment.appendChild(container);
+    // Skip short text that's likely UI elements
+    let text = node.textContent.trim();
+    if (!text || isNumber(text) || text.length < MIN_TEXT_LENGTH) continue;
+
+    const fragment = document.createDocumentFragment();
+    const processedText = processText(node.textContent);
+    processedText.setAttribute("data-original", node.textContent);
+
+    fragment.appendChild(processedText);
     node.parentNode.replaceChild(fragment, node);
   }
 }
 
 function removeFormatting() {
-  console.log("Executing removeFormatting()");
   const modifiedElements = document.querySelectorAll(".bionic-reader");
-
   modifiedElements.forEach((element) => {
     const originalText = element.getAttribute("data-original");
     if (originalText) {
@@ -112,35 +134,43 @@ function removeFormatting() {
 }
 
 // Listen for messages from popup
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("Message received in content script:", request);
-  
-  if (request.action === "toggle") {
-    if (request.enabled) {
-      console.log("Enabling bionic reading");
-      if (request.highlightWeight) {
-        highlightStyle = `font-weight: ${request.highlightWeight};`;
+
+  try {
+    if (request.action === "toggle") {
+      if (request.enabled) {
+        if (request.highlightWeight) {
+          highlightWeight = parseInt(request.highlightWeight);
+        }
+        boldFirstLetters();
+      } else {
+        removeFormatting();
       }
-      boldFirstLetters();
-    } else {
-      console.log("Disabling bionic reading");
+    } else if (request.action === "updateWeight") {
+      highlightWeight = parseInt(request.highlightWeight);
       removeFormatting();
+      boldFirstLetters();
+    } else if (request.action === "processPreview") {
+      // Process preview text and return HTML
+      highlightWeight = parseInt(request.weight);
+      const processed = processText(request.text);
+      sendResponse({ processedHTML: processed.outerHTML });
     }
-    sendResponse({ success: true });
-  } else if (request.action === "updateWeight") {
-    highlightStyle = `font-weight: ${request.highlightWeight};`;
-    // Re-apply formatting with new weight
-    removeFormatting();
-    boldFirstLetters();
-    sendResponse({ success: true });
+  } catch (error) {
+    console.error("Error in content script:", error);
+    sendResponse({ error: error.message });
   }
   return true;
 });
 
-// Check initial state
-chrome.storage.local.get(["enabled"], function (result) {
+// Initialize on load if enabled
+chrome.storage.local.get(["enabled", "highlightWeight"], function (result) {
   console.log("Initial state:", result);
   if (result.enabled) {
+    if (result.highlightWeight) {
+      highlightWeight = parseInt(result.highlightWeight);
+    }
     boldFirstLetters();
   }
 });
