@@ -5,26 +5,27 @@
   </head>
   <body>
     <h3>Bionic Reading</h3>
-    <button id="toggleButton">Enable</button>
+    <button id="toggleButton">Enable (⌘/Ctrl+B)</button>
 
     <div class="weight-container">
       <label for="weightRange">Highlight Weight</label>
       <input
         type="range"
         id="weightRange"
-        min="100"
-        max="900"
+        min="200"
+        max="800"
         step="100"
         value="700"
       />
       <div class="weight-stops">
-        <span>100</span>
+        <span>200</span>
         <span>300</span>
+        <span>400</span>
         <span>500</span>
+        <span>600</span>
         <span>700</span>
-        <span>900</span>
+        <span>800</span>
       </div>
-      <div class="weight-preview">Preview Text</div>
     </div>
 
     <script src="popup.js"></script>

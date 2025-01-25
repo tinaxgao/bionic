@@ -38,10 +38,3 @@ input[type="range"]::-webkit-slider-thumb {
   color: #666;
   margin-top: 5px;
 }
-.weight-preview {
-  margin-top: 15px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  text-align: center;
-}

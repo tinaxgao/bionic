@@ -1,31 +1,25 @@
 document.addEventListener("DOMContentLoaded", function () {
   const toggleButton = document.getElementById("toggleButton");
   const weightRange = document.getElementById("weightRange");
-  const weightPreview = document.querySelector(".weight-preview");
 
-  if (!toggleButton || !weightRange || !weightPreview) {
+  if (!toggleButton || !weightRange) {
     console.error("Required elements not found");
     return;
   }
 
   function updateUI(isEnabled) {
-    toggleButton.textContent = isEnabled ? "Disable" : "Enable";
+    toggleButton.textContent = isEnabled
+      ? "Disable (⌘/Ctrl+B)"
+      : "Enable (⌘/Ctrl+B)";
   }
 
   function updatePreview(weight) {
     // Send message to content script to get processed text
-    chrome.runtime.sendMessage(
-      {
-        action: "processPreview",
-        text: "Preview Text",
-        weight: weight
-      },
-      function(response) {
-        if (response && response.processedHTML) {
-          weightPreview.innerHTML = response.processedHTML;
-        }
-      }
-    );
+    chrome.runtime.sendMessage({
+      action: "processPreview",
+      text: "Preview Text",
+      weight: weight,
+    });
   }
 
   // Get initial states
@@ -42,10 +36,10 @@ document.addEventListener("DOMContentLoaded", function () {
   toggleButton.addEventListener("click", function () {
     chrome.storage.local.get(["enabled"], function (result) {
       const newState = !(result.enabled ?? false);
-      
+
       chrome.storage.local.set({ enabled: newState }, function () {
         updateUI(newState);
-        
+
         chrome.tabs.query(
           { active: true, currentWindow: true },
           function (tabs) {
@@ -54,14 +48,11 @@ document.addEventListener("DOMContentLoaded", function () {
               return;
             }
 
-            chrome.tabs.sendMessage(
-              tabs[0].id,
-              {
-                action: "toggle",
-                enabled: newState,
-                highlightWeight: parseInt(weightRange.value),
-              }
-            );
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: "toggle",
+              enabled: newState,
+              highlightWeight: parseInt(weightRange.value),
+            });
           }
         );
       });
@@ -71,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Handle weight range changes
   weightRange.addEventListener("input", function (e) {
     const weight = parseInt(e.target.value);
-    
+
     updatePreview(weight);
     chrome.storage.local.set({ highlightWeight: weight });
 
@@ -80,15 +71,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
       chrome.storage.local.get(["enabled"], function (result) {
         if (result.enabled) {
-          chrome.tabs.sendMessage(
-            tabs[0].id,
-            {
-              action: "updateWeight",
-              highlightWeight: weight,
-            }
-          );
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: "updateWeight",
+            highlightWeight: weight,
+          });
         }
       });
     });
+  });
+
+  // Add this to your existing popup.js
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === "stateChanged") {
+      const button = document.getElementById("toggleButton");
+      button.textContent = message.enabled ? "Disable" : "Enable";
+    }
   });
 });

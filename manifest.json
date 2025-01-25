@@ -26,5 +26,17 @@
       "resources": ["popup.css"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "commands": {
+    "toggle-bionic": {
+      "suggested_key": {
+        "default": "Ctrl+B",
+        "mac": "Command+B"
+      },
+      "description": "Toggle Bionic Reading"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
 }
