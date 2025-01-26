@@ -43,6 +43,6 @@ We reserve the right to update this privacy policy to reflect changes in our pra
 
 ### Contact
 
-If you have any questions about this privacy policy or the extension's privacy practices, please [create an issue](link-to-your-github-issues) on our GitHub repository.
+If you have any questions about this privacy policy or the extension's privacy practices, please create an issue on our GitHub repository.
 
 Last updated: 2025-01-26
